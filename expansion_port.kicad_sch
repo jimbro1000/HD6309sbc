@@ -609,8 +609,8 @@
   )
 
 
+
   (no_connect (at 112.014 36.576) (uuid 28aa48c4-5074-4ceb-8963-9de6b76a394f))
-  (no_connect (at 78.994 36.576) (uuid 2d3db3ad-3ef4-467e-970e-c1ae714d33da))
   (no_connect (at 45.974 36.576) (uuid 5d917683-5903-40d4-9e6b-6335335f4df1))
   (no_connect (at 106.934 36.576) (uuid 6f807cda-319f-4761-84f9-0a7a35d6304f))
   (no_connect (at 58.674 49.276) (uuid 76e163eb-7cd3-4f06-80b8-e465ab4d030d))
@@ -700,6 +700,13 @@
     (uuid 3cba3771-8b52-4bfd-8ddd-b45e65531dcd)
     (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 89.2334 53.9872 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
+    )
+  )
+  (global_label "MAPPED_MEM" (shape input) (at 78.994 36.576 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid 3f9fd92f-dc43-4337-98e6-783fd0dba0fd)
+    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 78.9146 21.6443 90)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
     )
   )
   (global_label "A10" (shape input) (at 73.914 49.276 270) (fields_autoplaced)

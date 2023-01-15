@@ -752,7 +752,6 @@
     )
   )
 
-
   (junction (at 50.292 52.578) (diameter 0) (color 0 0 0 0)
     (uuid 152f108e-1bbb-4688-aac0-137a5caa8636)
   )
@@ -997,7 +996,7 @@
     (property "Value" "17pF" (id 1) (at 61.976 69.0879 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (id 2) (at 58.8772 71.628 0)
+    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder" (id 2) (at 58.8772 71.628 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GJM1555C1H170FB01-01.pdf" (id 3) (at 57.912 67.818 0)
@@ -1019,7 +1018,7 @@
     (property "Value" "17pF" (id 1) (at 47.244 69.0879 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (id 2) (at 44.1452 71.628 0)
+    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder" (id 2) (at 44.1452 71.628 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GJM1555C1H170FB01-01.pdf" (id 3) (at 43.18 67.818 0)

@@ -4736,7 +4736,7 @@
       (reference "#PWR0119") (unit 1) (value "+5V") (footprint "")
     )
     (path "/7fb0b11a-d520-4ab4-8aaa-1ba47fc9417e/547b4f25-3282-4e15-b3af-8ab9870bac0e"
-      (reference "C1") (unit 1) (value "17pF") (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
+      (reference "C1") (unit 1) (value "18pF") (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
     )
     (path "/03b0e509-a9b7-42e3-b8aa-5c27956ccf70"
       (reference "C2") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
@@ -4751,7 +4751,7 @@
       (reference "C6") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/7fb0b11a-d520-4ab4-8aaa-1ba47fc9417e/509a6177-dcb1-4aa2-8fa1-ddb7dda29eae"
-      (reference "C7") (unit 1) (value "17pF") (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
+      (reference "C7") (unit 1) (value "18pF") (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
     )
     (path "/75610b60-f8f6-4c80-969f-0377a63576b1"
       (reference "J1") (unit 1) (value "Conn_01x02_Male") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical")

@@ -4266,7 +4266,7 @@
     (property "Reference" "C6" (id 0) (at 158.242 24.3839 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "C" (id 1) (at 158.242 26.9239 0)
+    (property "Value" "1uF" (id 1) (at 158.242 26.9239 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 155.6512 29.464 0)
@@ -4748,7 +4748,7 @@
       (reference "C5") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/e30abfee-1dd8-4d26-93f4-39c0300bc9cf"
-      (reference "C6") (unit 1) (value "C") (footprint "Capacitor_SMD:C_0805_2012Metric")
+      (reference "C6") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/7fb0b11a-d520-4ab4-8aaa-1ba47fc9417e/509a6177-dcb1-4aa2-8fa1-ddb7dda29eae"
       (reference "C7") (unit 1) (value "17pF") (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")

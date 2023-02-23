@@ -5204,6 +5204,23 @@
     )
   )
 
+  (sheet (at 226.822 18.288) (size 16.51 14.224) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid d89ed66f-3f07-40a4-a82f-2642d873e0a8)
+    (property "Sheetname" "Diagnostics" (at 226.822 17.5764 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "diagnostics.kicad_sch" (at 226.822 33.0966 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "HD6309sbc"
+        (path "/b6976bcd-dc73-4942-aa19-f7adbf9104c7" (page "5"))
+      )
+    )
+  )
+
   (sheet_instances
     (path "/" (page "1"))
   )

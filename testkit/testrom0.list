@@ -1,0 +1,23 @@
+8000                              org     $8000
+                      * Verify operation of cpu
+8000  8655            start       lda     #$55
+8002  8E03E8                      ldx     #1000
+8005  A7892000        loop1       sta     $2000, X
+8009  301F                        leax    -1, X
+800B  26F8                        bne     loop1
+800D  86AA                        lda     #$AA
+800F  8E03E8                      ldx     #1000
+8012  A7892000        loop2       sta     $2000, X
+8016  301F                        leax    -1, X
+8018  26F8                        bne     loop2
+801A  7E8000                      jmp     start
+                      * Boot and interrupt vectors
+FFF0                              org     $FFF0
+FFF0  0000            reserved    fdb     $0000
+FFF2  8000            swi3        fdb     start
+FFF4  8000            swi2        fdb     start
+FFF6  8000            firq        fdb     start
+FFF8  8000            irq         fdb     start
+FFFA  8000            swi         fdb     start
+FFFC  8000            nmi         fdb     start
+FFFE  8000            reset       fdb     start

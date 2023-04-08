@@ -1,33 +1,38 @@
 8000                              org     $8000
                       
                       * Verify operation of cpu
-8000  10CE7FFF        rst_entry   lds     #$7FFF      initialise system stack
-8004  CE6FFF                      ldu     #$6FFF      initialise user stack
-8007  8655            test        lda     #$55
-8009  8E6000                      ldx     #$6000
-800C  A784            loop1       sta     $0000, X
-800E  301F                        leax    -1, X
-8010  26FA                        bne     loop1
-8012  86AA                        lda     #$AA
-8014  8E6000                      ldx     #$6000
-8017  A784            loop2       sta     $0000, X
-8019  301F                        leax    -1, X
-801B  26FA                        bne     loop2
-801D  20E8                        bra     test
-801F  3B              nmi_entry   rti
-8020  3B              swi_entry   rti
-8021  3B              irq_entry   rti
-8022  3B              firq_entry  rti
-8023  3B              swi2_entry  rti
-8024  3B              swi3_entry  rti
+8000  10CE7FFF        rst_entry   lds     #$7FFF      ;initialise system stack
+8004  CE6FFF                      ldu     #$6FFF      ;initialise user stack
+8007  8600                        lda     #$00
+8009  1F8B                        tfr     A,DP        ;set DP to 0
+                      
+800B  8655            test        lda     #$55
+800D  8E6000                      ldx     #$6000
+                      
+8010  A784            loop1       sta     $0000, X    ;fill $0000 to $5FFF
+8012  301F                        leax    -1, X
+8014  26FA                        bne     loop1
+8016  86AA                        lda     #$AA
+8018  8E6000                      ldx     #$6000
+                      
+801B  A784            loop2       sta     $0000, X    ;fill $0000 to $5FFF
+801D  301F                        leax    -1, X
+801F  26FA                        bne     loop2
+8021  20E8                        bra     test        ;repeat
+8023  3B              nmi_entry   rti
+8024  3B              swi_entry   rti
+8025  3B              irq_entry   rti
+8026  3B              firq_entry  rti
+8027  3B              swi2_entry  rti
+8028  3B              swi3_entry  rti
                       
                       * Boot and interrupt vectors
 FFF0                              org     $FFF0
 FFF0  0000            reserved    fdb     $0000
-FFF2  8024            swi3        fdb     swi3_entry
-FFF4  8023            swi2        fdb     swi2_entry
-FFF6  8022            firq        fdb     firq_entry
-FFF8  8021            irq         fdb     irq_entry
-FFFA  8020            swi         fdb     swi_entry
-FFFC  801F            nmi         fdb     nmi_entry
+FFF2  8028            swi3        fdb     swi3_entry
+FFF4  8027            swi2        fdb     swi2_entry
+FFF6  8026            firq        fdb     firq_entry
+FFF8  8025            irq         fdb     irq_entry
+FFFA  8024            swi         fdb     swi_entry
+FFFC  8023            nmi         fdb     nmi_entry
 FFFE  8000            reset       fdb     rst_entry

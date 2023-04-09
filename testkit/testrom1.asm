@@ -1,69 +1,131 @@
-            org     $C000
+            ORG     $C000
+* Memory map values should be compatible with Dragon and CoCo
+controlreg  EQU     $0076       ;zero page copy of control register 1
+mempage     EQU     $0077       ;zero page copy of control register 2 (memory paging)
+<D.MDREG    EQU     $00E6       ;zero page copy of MD register
+memreg1     EQU     $FF24       ;control register 1
+memreg2     EQU     $FF25       ;control register 2
 
 * Verify operation of cpu
-rst_entry   lds     #$7FFF      ;initialise system stack
-            ldu     #$6FFF      ;initialise user stack
-            lda     #$00
-            tfr     A,DP        ;set DP to 0
+rst_entry   LDS     #$7FFF      ;initialise system stack
+            LDU     #$77FF      ;initialise user stack
+            LDA     #$00
+            TFR     A,DP        ;set DP to 0
+            STA     <D.MDREG    ;initialise copy of ME register
+            LDA     #$01
+            JSR     SETPMD
+            
+test        LDA     #$55
+            LDX     #$6000
 
-test        lda     #$55
-            ldx     #$6000
+loop1       STA     $0000, X    ;fill $0000 to $5FFF
+            LEAX    -1, X
+            BNE     loop1
+            LDA     #$AA
+            LDX     #$6000
 
-loop1       sta     $0000, X    ;fill $0000 to $5FFF
-            leax    -1, X
-            bne     loop1
-            lda     #$AA
-            ldx     #$6000
+loop2       STA     $0000, X    ;fill $0000 to $5FFF
+            LEAX    -1, X
+            BNE     loop2
+            BRA     test        ;repeat
 
-loop2       sta     $0000, X    ;fill $0000 to $5FFF
-            leax    -1, X
-            bne     loop2
-            bra     test        ;repeat
+* set paged memory page
+* A = page number
+setpage     STA     memreg2     ;set memory page
+            STA     mempage
+            RTS
 
-setpage     sta     $FF25       ;set memory page
-            rst_entry
+* Control memory paging mode
+* Depending on register A
+* A = 0 32K ram, 32K rom
+* A <> 0 32K ram, 16K page, 16k shadow rom
 
-pagemode    cmpa    #$00        ;enable/disable paging
-            bne     enablepage
-            sta     $FF24       ;disable
-            rts
-enablepage  pshu    A           ;enable
-            lda     #$01
-            sta     $FF24
-            pulu    A
-            rts
+* Assumes direct page location control reg 
+* contains a copy of memreg1 and direct page
+* location mempage contains a copy of memreg2
 
-shadow      pshu    A,B,X,Y     ;shadow rom into high mem
+* Assumes extended memory is available
+pagemode    CMPA    #$00        ;enable/disable paging
+            BNE     enablepage
+            LDA     #$FE
+            ANDA    controlreg
+            STA     controlreg
+            STA     memreg1     ;disable
+            RTS
+enablepage  PSHU    A           ;enable
+            LDA     #$01
+            ORA     controlreg
+            STA     controlreg
+            STA     memreg1
+            PULU    A,PC
+
+shadow      PSHU    A,B,X,Y     ;shadow rom into high mem
 * copy rom from C000 to 4000
-            ldx     #$C000
-            ldy     #$4000
-            jsr     blockcopy
+            LDX     #$C000
+            LDY     #$4000
+            JSR     blockcopy
 * enable page mode
-            lda     #$01
-            jsr     pagemode
+            LDA     #$01
+            JSR     pagemode
 * copy rom from 4000 back to C000
-            ldx     #$4000
-            ldy     #$C000
-            jsr     blockcopy
-            pulu    A,B,X,Y
-            rts
-* copy block from X to Y
-blockcopy   rts
+            LDX     #$4000
+            LDY     #$C000
+            JSR     blockcopy
+            PULU    A,B,X,Y,PC
 
-nmi_entry   rti
-swi_entry   rti
-irq_entry   rti
-firq_entry  rti
-swi2_entry  rti
-swi3_entry  rti
+* copy 8K block from X to Y
+* X = start address
+* Y = destination address
+blockcopy   PSHU    W
+            LDW     #$2000
+            TFM     X+,Y+
+            PULU    W,PC
+
+* Change processor to Emulation Mode or Native Mode,
+* depending on value in Register A
+* A=0 Emulation Mode
+* A<>0 Native Mode
+*
+* Assumes direct page location <D.MDREG contains an
+* accurate image of the MD register contents (The
+* program must initialize <D.MDREG to $00 at start-up).
+*
+* Since LDMD accepts only an immediate operand, we
+* push the appropriate LDMD / RTS sequence onto the
+* stack and call it as a subroutine.
+* Works for 6309 only.
+SETPMD      PSHS    X,D,CC      ;Save registers
+            ORCC    #$50        ;Make operation indivisible
+            LDB     <D.MDREG    ;Get mode register image
+            ANDB    #$FE        ; strip mode selection bit (Emulation)
+            TSTA
+            BEQ     SETMD2      ;Skip next part if want Emulation
+            ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
+SETMD2      STB     <D.MDREG    ;B has right value — update register image
+            LDA     #$39        ;RTS op-code
+            EXG     B,A         ;Now A = LDMD’s immed. operand, B = RTS
+            LDX     #$103D      ;X has LDMD’s 2-byte op-code
+            EXG     D,X         ;Now D:X = 10 3D <value> 39
+            PSHS    X,D         ;Put subroutine on stack
+            JSR     ,S          ;Call subroutine, setting mode
+            LEAS    4,S         ; throw away subroutine when done.
+            PULS    CC,D,X,PC   ; and return to caller.
+
+nmi_entry   RTI
+swi_entry   RTI
+irq_entry   RTI
+firq_entry  RTI
+swi2_entry  RTI
+swi3_entry  RTI
+div0_entry  RTI
 
 * Boot and interrupt vectors
-            org     $FFF0
-reserved    fdb     $0000
-swi3        fdb     swi3_entry
-swi2        fdb     swi2_entry
-firq        fdb     firq_entry
-irq         fdb     irq_entry
-swi         fdb     swi_entry
-nmi         fdb     nmi_entry
-reset       fdb     rst_entry
+            ORG     $FFF0
+div0        FDB     div0_entry  ;specific to 6309 native mode
+swi3        FDB     swi3_entry
+swi2        FDB     swi2_entry
+firq        FDB     firq_entry
+irq         FDB     irq_entry
+swi         FDB     swi_entry
+nmi         FDB     nmi_entry
+reset       FDB     rst_entry

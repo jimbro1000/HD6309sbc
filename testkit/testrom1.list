@@ -1,38 +1,209 @@
-8000                              org     $8000
+C000                              ORG     $C000
+                      
+0076                  controlreg  EQU     $0076       ;zero page copy of control register 1
+0077                  mempage     EQU     $0077       ;zero page copy of control register 2 (memory paging)
+00E6                  MDREG       EQU     $00E6       ;zero page copy of MD register
+FF24                  memreg1     EQU     $FF24       ;control register 1
+FF25                  memreg2     EQU     $FF25       ;control register 2
+FF00                  pia0base    EQU     $FF00       ;PIA registers
+FF04                  pia1base    EQU     $FF04
+FF08                  pia2base    EQU     $FF08
+FF0C                  aciabase    EQU     $FF0C       ;ACIA registers
+0100                  intpolltab  EQU     $0100       ;table of mapped registers to poll on interrupt
                       
                       * Verify operation of cpu
-8000  10CE7FFF        rst_entry   lds     #$7FFF      ;initialise system stack
-8004  CE6FFF                      ldu     #$6FFF      ;initialise user stack
-8007  8600                        lda     #$00
-8009  1F8B                        tfr     A,DP        ;set DP to 0
+C000  10CE7FFF        rst_entry   LDS     #$7FFF      ;initialise system stack
+C004  CE77FF                      LDU     #$77FF      ;initialise user stack
+C007  8600                        LDA     #$00
+C009  1F8B                        TFR     A,DP        ;set DP to 0
+C00B  B70076                      STA     controlreg  ;initialise control register copy with 0
+C00E  B7FF24                      STA     memreg1     ;set control register to 0
+C011  B70077                      STA     mempage     ;set memory page copy to 0
+C014  B7FF25                      STA     memreg2     ;set memory page to 0
+C017  B70100                      STA     intpolltab  ;empty interrupt poll table
+C01A  B70101                      STA     intpolltab+1
+C01D  B700E6                      STA     MDREG       ;initialise copy of ME register
+C020  8601                        LDA     #$01
+C022  BDC0F2                      JSR     SETPMD
+C025  BDC0D0                      JSR     unmaskint   ;enable interrupts
+                                  
+C028  8655            test        LDA     #$55
+C02A  8E6000                      LDX     #$6000
                       
-800B  8655            test        lda     #$55
-800D  8E6000                      ldx     #$6000
+C02D  A784            loop1       STA     $0000, X    ;fill $0000 to $5FFF
+C02F  301F                        LEAX    -1, X
+C031  26FA                        BNE     loop1
+C033  86AA                        LDA     #$AA
+C035  8E6000                      LDX     #$6000
                       
-8010  A784            loop1       sta     $0000, X    ;fill $0000 to $5FFF
-8012  301F                        leax    -1, X
-8014  26FA                        bne     loop1
-8016  86AA                        lda     #$AA
-8018  8E6000                      ldx     #$6000
+C038  A784            loop2       STA     $0000, X    ;fill $0000 to $5FFF
+C03A  301F                        LEAX    -1, X
+C03C  26FA                        BNE     loop2
+C03E  20E8                        BRA     test        ;repeat
                       
-801B  A784            loop2       sta     $0000, X    ;fill $0000 to $5FFF
-801D  301F                        leax    -1, X
-801F  26FA                        bne     loop2
-8021  20E8                        bra     test        ;repeat
-8023  3B              nmi_entry   rti
-8024  3B              swi_entry   rti
-8025  3B              irq_entry   rti
-8026  3B              firq_entry  rti
-8027  3B              swi2_entry  rti
-8028  3B              swi3_entry  rti
+                      * set paged memory page
+                      * A = page number
+C040  B7FF25          setpage     STA     memreg2     ;set memory page
+C043  B70077                      STA     mempage
+C046  39                          RTS
+                      
+                      * Control memory paging mode
+                      * Depending on register A
+                      * A = 0 32K ram, 32K rom
+                      * A <> 0 32K ram, 16K page, 16k shadow rom
+                      
+                      * Assumes direct page location control reg 
+                      * contains a copy of memreg1 and direct page
+                      * location mempage contains a copy of memreg2
+                      
+                      * Assumes extended memory is available
+C047  8100            pagemode    CMPA    #$00        ;enable/disable paging
+C049  260C                        BNE     enablepage
+C04B  86FE            disablepage LDA     #$FE
+C04D  B40076                      ANDA    controlreg
+C050  B70076                      STA     controlreg
+C053  B7FF24                      STA     memreg1     ;disable
+C056  39                          RTS
+C057  3402            enablepage  PSHS    A           ;enable
+C059  8601                        LDA     #$01
+C05B  BA0076                      ORA     controlreg
+C05E  B70076                      STA     controlreg
+C061  B7FF24                      STA     memreg1
+C064  3582                        PULS    A,PC
+                      
+C066  3436            shadow      PSHS    A,B,X,Y     ;shadow rom into high mem
+                      * disable interrupts
+C068  BDC0CD                      JSR     maskint
+                      * copy interrupt vectors first as precaution
+C06B  8EFFF0                      LDX     #$FFF0
+C06E  108E4000                    LDY     #$4000
+C072  10860010                    LDW     #$0010
+C076  BDC0C8                      JSR     blockcopy
+C079  8601                        LDA     #$01
+C07B  BDC047                      JSR     pagemode
+C07E  8E4000                      LDX     #$4000
+C081  108EFFF0                    LDY     #$FFF0
+C085  10860010                    LDW     #$0010
+C089  BDC0C8                      JSR     blockcopy
+C08C  8600                        LDA     #$00
+C08E  BDC047                      JSR     pagemode
+                      * copy rom from C000 to 4000
+C091  8EC000                      LDX     #$C000
+C094  108E4000                    LDY     #$4000
+C098  10863F00                    LDW     #$3F00
+C09C  BDC0C8                      JSR     blockcopy
+                      * enable page mode
+C09F  8601                        LDA     #$01
+C0A1  BDC047                      JSR     pagemode
+                      * copy rom from 4000 back to C000
+C0A4  8E4000                      LDX     #$4000
+C0A7  108EC000                    LDY     #$C000
+C0AB  10863F00                    LDW     #$3F00
+C0AF  BDC0C8                      JSR     blockcopy
+                      * re-enable interrupts
+C0B2  BDC0D0                      JSR     unmaskint
+C0B5  35B6                        PULS    A,B,X,Y,PC
+                      
+                      * swap memory page
+                      * A = page number
+                      * tests if memory paging is enabled
+                      * nb: this code must not be held
+                      *     in paged memory to avoid
+                      *     unexpected behaviour on return
+C0B7  3404            pageswap    PSHS    B
+C0B9  F60076                      LDB     controlreg
+C0BC  C401                        ANDB    #$01
+C0BE  2706                        BEQ     swapret
+C0C0  B70077                      STA     mempage
+C0C3  B7FF25                      STA     memreg2
+C0C6  3584            swapret     PULS    B,PC
+                      
+                      * copy rom block from X to Y
+                      * X = start address
+                      * Y = destination address
+                      * W = length
+C0C8  113812          blockcopy   TFM     X+,Y+           ; 6309 specific implementation - will fail on a 6809
+C0CB  3580                        PULS    PC
+                      
+                      * disable interrupts (ignores existing state)
+C0CD  1A50            maskint     ORCC    #%01010000
+C0CF  39                          RTS
+                      
+                      * enable interrupts (ignores prior state)
+C0D0  1CAF            unmaskint   ANDCC   #%10101111
+C0D2  39                          RTS
+                      
+                      * poll external interrupts
+                      * check interrupt poll table
+                      * each entry is 6 bytes:
+                      *  byte 0/1 is the address to test
+                      *  byte 2 is the test mask
+                      *  byte 3 is control over positive or negative test
+                      *  byte 4/5 is the jump address
+                      * halts on first zero word entry at 0/1
+                      * while flexible and extendable it is also slow
+                      * rapid interrupts will becoming blocking
+C0D3  10BE0100        pollint     LDY     intpolltab  ;point Y at start of table
+C0D7  AEA1            pollloop    LDX     ,Y++        ;load first register address
+C0D9  2601                        BNE     scanpoll    ;proceed if non-zero value found
+C0DB  3B                          RTI                 ;release from poll without action
+C0DC  A6A0            scanpoll    LDA     ,Y+         ;grab test mask
+C0DE  E6A0                        LDB     ,Y+         ;grab test type
+C0E0  2608                        BNE     pollpos     ;select positive of negative test
+C0E2  A484            pollneg     ANDA    ,X          ;mask address at X
+C0E4  270A                        BEQ     vectorpoll  ;if 0 result use vector
+C0E6  3122            pollnext    LEAY    2,Y         ;on negative result skip vector
+C0E8  20ED                        BRA     pollloop    ;next entry
+C0EA  A484            pollpos     ANDA    ,X          ;mask address at X
+C0EC  2602                        BNE     vectorpoll  ;if non0 result use vector
+C0EE  20F6                        BRA     pollnext    ;next entry
+C0F0  6EA4            vectorpoll  JMP     ,Y          ;vector to identified handler
+                      
+                      * Change processor to Emulation Mode or Native Mode,
+                      * depending on value in Register A
+                      * A=0 Emulation Mode
+                      * A<>0 Native Mode
+                      *
+                      * Assumes direct page location MDREG contains an
+                      * accurate image of the MD register contents (The
+                      * program must initialize MDREG to $00 at start-up).
+                      *
+                      * Since LDMD accepts only an immediate operand, we
+                      * push the appropriate LDMD / RTS sequence onto the
+                      * stack and call it as a subroutine.
+                      * Works for 6309 only.
+C0F2  3417            SETPMD      PSHS    X,D,CC      ;Save registers
+C0F4  1A50                        ORCC    #$50        ;Make operation indivisible
+C0F6  F600E6                      LDB     MDREG       ;Get mode register image
+C0F9  C4FE                        ANDB    #$FE        ; strip mode selection bit (Emulation)
+C0FB  4D                          TSTA
+C0FC  2702                        BEQ     SETMD2      ;Skip next part if want Emulation
+C0FE  CA01                        ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
+C100  F700E6          SETMD2      STB     MDREG       ;B has right value - update register image
+C103  8639                        LDA     #$39        ;RTS op-code
+C105  1E98                        EXG     B,A         ;Now A = LDMD's immed. operand, B = RTS
+C107  8E103D                      LDX     #$103D      ;X has LDMD's 2-byte op-code
+C10A  1E01                        EXG     D,X         ;Now D:X = 10 3D <value> 39
+C10C  3416                        PSHS    X,D         ;Put subroutine on stack
+C10E  ADE4                        JSR     ,S          ;Call subroutine, setting mode
+C110  3264                        LEAS    4,S         ; throw away subroutine when done.
+C112  3597                        PULS    CC,D,X,PC   ; and return to caller.
+                      
+C114  3B              nmi_entry   RTI
+C115  3B              swi_entry   RTI
+C116  7EC0D3          irq_entry   JMP     pollint
+C119  3B              firq_entry  RTI
+C11A  3B              swi2_entry  RTI
+C11B  3B              swi3_entry  RTI
+C11C  3B              div0_entry  RTI
                       
                       * Boot and interrupt vectors
-FFF0                              org     $FFF0
-FFF0  0000            reserved    fdb     $0000
-FFF2  8028            swi3        fdb     swi3_entry
-FFF4  8027            swi2        fdb     swi2_entry
-FFF6  8026            firq        fdb     firq_entry
-FFF8  8025            irq         fdb     irq_entry
-FFFA  8024            swi         fdb     swi_entry
-FFFC  8023            nmi         fdb     nmi_entry
-FFFE  8000            reset       fdb     rst_entry
+FFF0                              ORG     $FFF0
+FFF0  C11C            div0        FDB     div0_entry  ;specific to 6309 native mode
+FFF2  C11B            swi3        FDB     swi3_entry
+FFF4  C11A            swi2        FDB     swi2_entry
+FFF6  C119            firq        FDB     firq_entry
+FFF8  C116            irq         FDB     irq_entry
+FFFA  C115            swi         FDB     swi_entry
+FFFC  C114            nmi         FDB     nmi_entry
+FFFE  C000            reset       FDB     rst_entry

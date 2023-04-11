@@ -2,7 +2,7 @@
 
 controlreg  EQU     $0076       ;zero page copy of control register 1
 mempage     EQU     $0077       ;zero page copy of control register 2 (memory paging)
-<D.MDREG    EQU     $00E6       ;zero page copy of MD register
+MDREG       EQU     $00E6       ;zero page copy of MD register
 memreg1     EQU     $FF24       ;control register 1
 memreg2     EQU     $FF25       ;control register 2
 pia0base    EQU     $FF00       ;PIA registers
@@ -22,7 +22,7 @@ rst_entry   LDS     #$7FFF      ;initialise system stack
             STA     memreg2     ;set memory page to 0
             STA     intpolltab  ;empty interrupt poll table
             STA     intpolltab+1
-            STA     <D.MDREG    ;initialise copy of ME register
+            STA     MDREG       ;initialise copy of ME register
             LDA     #$01
             JSR     SETPMD
             JSR     unmaskint   ;enable interrupts
@@ -164,9 +164,9 @@ vectorpoll  JMP     ,Y          ;vector to identified handler
 * A=0 Emulation Mode
 * A<>0 Native Mode
 *
-* Assumes direct page location <D.MDREG contains an
+* Assumes direct page location MDREG contains an
 * accurate image of the MD register contents (The
-* program must initialize <D.MDREG to $00 at start-up).
+* program must initialize MDREG to $00 at start-up).
 *
 * Since LDMD accepts only an immediate operand, we
 * push the appropriate LDMD / RTS sequence onto the
@@ -174,12 +174,12 @@ vectorpoll  JMP     ,Y          ;vector to identified handler
 * Works for 6309 only.
 SETPMD      PSHS    X,D,CC      ;Save registers
             ORCC    #$50        ;Make operation indivisible
-            LDB     <D.MDREG    ;Get mode register image
+            LDB     MDREG       ;Get mode register image
             ANDB    #$FE        ; strip mode selection bit (Emulation)
             TSTA
             BEQ     SETMD2      ;Skip next part if want Emulation
             ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
-SETMD2      STB     <D.MDREG    ;B has right value - update register image
+SETMD2      STB     MDREG       ;B has right value - update register image
             LDA     #$39        ;RTS op-code
             EXG     B,A         ;Now A = LDMD's immed. operand, B = RTS
             LDX     #$103D      ;X has LDMD's 2-byte op-code

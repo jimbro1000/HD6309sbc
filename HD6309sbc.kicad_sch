@@ -4,6 +4,11 @@
 
   (paper "A4")
 
+  (title_block
+    (date "2023-04-03")
+    (rev "1.7")
+  )
+
   (lib_symbols
     (symbol "6309sbc:28C256plcc" (in_bom yes) (on_board yes)
       (property "Reference" "U" (at -7.62 26.67 0)

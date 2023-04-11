@@ -1,19 +1,31 @@
             ORG     $C000
-* Memory map values should be compatible with Dragon and CoCo
+
 controlreg  EQU     $0076       ;zero page copy of control register 1
 mempage     EQU     $0077       ;zero page copy of control register 2 (memory paging)
 <D.MDREG    EQU     $00E6       ;zero page copy of MD register
 memreg1     EQU     $FF24       ;control register 1
 memreg2     EQU     $FF25       ;control register 2
+pia0base    EQU     $FF00       ;PIA registers
+pia1base    EQU     $FF04
+pia2base    EQU     $FF08
+aciabase    EQU     $FF0C       ;ACIA registers
+intpolltab  EQU     $0100       ;table of mapped registers to poll on interrupt
 
 * Verify operation of cpu
 rst_entry   LDS     #$7FFF      ;initialise system stack
             LDU     #$77FF      ;initialise user stack
             LDA     #$00
             TFR     A,DP        ;set DP to 0
+            STA     controlreg  ;initialise control register copy with 0
+            STA     memreg1     ;set control register to 0
+            STA     mempage     ;set memory page copy to 0
+            STA     memreg2     ;set memory page to 0
+            STA     intpolltab  ;empty interrupt poll table
+            STA     intpolltab+1
             STA     <D.MDREG    ;initialise copy of ME register
             LDA     #$01
             JSR     SETPMD
+            JSR     unmaskint   ;enable interrupts
             
 test        LDA     #$55
             LDX     #$6000
@@ -47,22 +59,38 @@ setpage     STA     memreg2     ;set memory page
 * Assumes extended memory is available
 pagemode    CMPA    #$00        ;enable/disable paging
             BNE     enablepage
-            LDA     #$FE
+disablepage LDA     #$FE
             ANDA    controlreg
             STA     controlreg
             STA     memreg1     ;disable
             RTS
-enablepage  PSHU    A           ;enable
+enablepage  PSHS    A           ;enable
             LDA     #$01
             ORA     controlreg
             STA     controlreg
             STA     memreg1
-            PULU    A,PC
+            PULS    A,PC
 
-shadow      PSHU    A,B,X,Y     ;shadow rom into high mem
+shadow      PSHS    A,B,X,Y     ;shadow rom into high mem
+* disable interrupts
+            JSR     maskint
+* copy interrupt vectors first as precaution
+            LDX     #$FFF0
+            LDY     #$4000
+            LDW     #$0010
+            JSR     blockcopy
+            LDA     #$01
+            JSR     pagemode
+            LDX     #$4000
+            LDY     #$FFF0
+            LDW     #$0010
+            JSR     blockcopy
+            LDA     #$00
+            JSR     pagemode
 * copy rom from C000 to 4000
             LDX     #$C000
             LDY     #$4000
+            LDW     #$3F00
             JSR     blockcopy
 * enable page mode
             LDA     #$01
@@ -70,16 +98,66 @@ shadow      PSHU    A,B,X,Y     ;shadow rom into high mem
 * copy rom from 4000 back to C000
             LDX     #$4000
             LDY     #$C000
+            LDW     #$3F00
             JSR     blockcopy
-            PULU    A,B,X,Y,PC
+* re-enable interrupts
+            JSR     unmaskint
+            PULS    A,B,X,Y,PC
 
-* copy 8K block from X to Y
+* swap memory page
+* A = page number
+* tests if memory paging is enabled
+* nb: this code must not be held
+*     in paged memory to avoid
+*     unexpected behaviour on return
+pageswap    PSHS    B
+            LDB     controlreg
+            ANDB    #$01
+            BEQ     swapret
+            STA     mempage
+            STA     memreg2
+swapret     PULS    B,PC
+
+* copy rom block from X to Y
 * X = start address
 * Y = destination address
-blockcopy   PSHU    W
-            LDW     #$2000
-            TFM     X+,Y+
-            PULU    W,PC
+* W = length
+blockcopy   TFM     X+,Y+           ; 6309 specific implementation - will fail on a 6809
+            PULS    PC
+
+* disable interrupts (ignores existing state)
+maskint     ORCC    #%01010000
+            RTS
+
+* enable interrupts (ignores prior state)
+unmaskint   ANDCC   #%10101111
+            RTS
+
+* poll external interrupts
+* check interrupt poll table
+* each entry is 6 bytes:
+*  byte 0/1 is the address to test
+*  byte 2 is the test mask
+*  byte 3 is control over positive or negative test
+*  byte 4/5 is the jump address
+* halts on first zero word entry at 0/1
+* while flexible and extendable it is also slow
+* rapid interrupts will becoming blocking
+pollint     LDY     intpolltab  ;point Y at start of table
+pollloop    LDX     ,Y++        ;load first register address
+            BNE     scanpoll    ;proceed if non-zero value found
+            RTI                 ;release from poll without action
+scanpoll    LDA     ,Y+         ;grab test mask
+            LDB     ,Y+         ;grab test type
+            BNE     pollpos     ;select positive of negative test
+pollneg     ANDA    ,X          ;mask address at X
+            BEQ     vectorpoll  ;if 0 result use vector
+pollnext    LEAY    2,Y         ;on negative result skip vector
+            BRA     pollloop    ;next entry
+pollpos     ANDA    ,X          ;mask address at X
+            BNE     vectorpoll  ;if non0 result use vector
+            BRA     pollnext    ;next entry
+vectorpoll  JMP     ,Y          ;vector to identified handler
 
 * Change processor to Emulation Mode or Native Mode,
 * depending on value in Register A
@@ -101,10 +179,10 @@ SETPMD      PSHS    X,D,CC      ;Save registers
             TSTA
             BEQ     SETMD2      ;Skip next part if want Emulation
             ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
-SETMD2      STB     <D.MDREG    ;B has right value — update register image
+SETMD2      STB     <D.MDREG    ;B has right value - update register image
             LDA     #$39        ;RTS op-code
-            EXG     B,A         ;Now A = LDMD’s immed. operand, B = RTS
-            LDX     #$103D      ;X has LDMD’s 2-byte op-code
+            EXG     B,A         ;Now A = LDMD's immed. operand, B = RTS
+            LDX     #$103D      ;X has LDMD's 2-byte op-code
             EXG     D,X         ;Now D:X = 10 3D <value> 39
             PSHS    X,D         ;Put subroutine on stack
             JSR     ,S          ;Call subroutine, setting mode
@@ -113,7 +191,7 @@ SETMD2      STB     <D.MDREG    ;B has right value — update register image
 
 nmi_entry   RTI
 swi_entry   RTI
-irq_entry   RTI
+irq_entry   JMP     pollint
 firq_entry  RTI
 swi2_entry  RTI
 swi3_entry  RTI

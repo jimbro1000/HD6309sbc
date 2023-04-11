@@ -9,7 +9,8 @@ pia0base    EQU     $FF00       ;PIA registers
 pia1base    EQU     $FF04
 pia2base    EQU     $FF08
 aciabase    EQU     $FF0C       ;ACIA registers
-intpolltab  EQU     $0100       ;table of mapped registers to poll on interrupt
+intpolltab  EQU     $0100       ;table of mapped registers to poll on interrupt 38 bytes max
+                                ;terminates with a $0000 word
 
 * Verify operation of cpu
 rst_entry   LDS     #$7FFF      ;initialise system stack
@@ -27,7 +28,8 @@ rst_entry   LDS     #$7FFF      ;initialise system stack
             JSR     SETPMD
             JSR     unmaskint   ;enable interrupts
             
-test        LDA     #$55
+test        LDB     #$02
+teststart   LDA     #$55
             LDX     #$6000
 
 loop1       STA     $0000, X    ;fill $0000 to $5FFF
@@ -39,7 +41,9 @@ loop1       STA     $0000, X    ;fill $0000 to $5FFF
 loop2       STA     $0000, X    ;fill $0000 to $5FFF
             LEAX    -1, X
             BNE     loop2
-            BRA     test        ;repeat
+            STB     controlreg
+            EORB    #$02
+            BRA     teststart   ;repeat
 
 * set paged memory page
 * A = page number

@@ -11,6 +11,35 @@ pia2base    EQU     $FF08
 aciabase    EQU     $FF0C       ;ACIA registers
 intpolltab  EQU     $0100       ;table of mapped registers to poll on interrupt 38 bytes max
                                 ;terminates with a $0000 word
+piadataa    EQU     0           ;offset to pia data A register
+piacontrola EQU     1           ;offset to pia control A register
+piadatab    EQU     2           ;offset to pia data B register
+piacontrolb EQU     3           ;offset to pia control B register
+piasetdata  EQU     %00000100   ;or mask to set data register
+piasetdir   EQU     %11111011   ;and mask to set direction register
+
+keybdshift  EQU     $0149       ;keyboard shift status 0x00 = off 0xff = on
+keybdbase   EQU     $0150       ;keyboard scan table
+keybdscan   EQU     $0158       ;keyboard rollover table
+keybuffer   EQU     $02dd       ;255 character keyboard buffer
+                                ;0-1 = buffer head
+                                ;2-3 = buffer tail
+                                ;4-255 = data
+
+* keyboard matrix without shift
+* row 0 = @ a b c d e f g
+* row 1 = h i j k l m n o
+* row 2 = p q r s t u v w
+* row 3 = x y z (10) ^ (8) (9) space
+* row 4 = 0 1 2 3 4 5 6 7
+* row 5 = 8 9 : ; , - . /
+* row 6 = enter clear break nc nc nc nc shift
+
+* matrix with shift
+* row 0 = (19) A B C D E F G
+* row 1 = H I J K L M N O
+* row 2 = P Q R S T U V W
+* row 3 = X Y Z [ _ (21) ]
 
 * Verify operation of cpu
 rst_entry   LDS     #$7FFF      ;initialise system stack
@@ -50,6 +79,90 @@ loop2       STA     $0000, X    ;fill $0000 to $5FFF
 setpage     STA     memreg2     ;set memory page
             STA     mempage
             RTS
+
+* init keyboard
+* sets pia0 for keyboard scanning
+* clears rollover table
+initkbd     PSHS    A,X
+            LDA     #$7f
+            LDX     pia0base
+            JSR     setpiadir
+            LDA     #$00
+            LDX     pia0base + 2
+            JSR     setpiadir
+            LDX     keybdbase
+clrkbd      STA     ,X+
+            CMPX    keybdbase + 7
+            BNE     clrkbd
+            PULS    A,X,PC
+
+* scan keyboard
+* store scan at rollover scan table
+* assumes pia0 PIA0 A0-A6 and PIA B0-B7 are correctly configured
+scankbd     PSHS    A,B,X
+            LDB     #$01
+            LDX     keybdbase
+scanloop    STB     pia0base + piadataa
+            LDA     pia0base + piadatab
+            STA     ,X+
+            LSLB
+            CMPA    #$80
+            BNE     scanloop
+            PULS    A,B,X,PC
+
+updatekbd   JSR     scankbd
+            PSHS    A,B,X
+            LDX     keybdbase
+            LDA     7,X
+            ANDA    #$40
+            BEQ     setshift
+            LDA     #$ff
+setshift    STA     keybdshift
+            LDB     #$00
+keyloop     LDA     ,X
+            EORA    8,X
+* convert new keys to characters in buffer
+            LDA     ,X
+            STA     8,X
+            LEAX    1,X
+            INCB
+            CMPX    keybdbase + 8
+            BNE     keyloop
+            PULS    A,B,X,PC
+
+* translate keypress to character
+* A = keys pressed on row
+* B = column
+
+* keyboard buffer handler
+* A = character to store
+* rejects input if buffer is full
+addkey      PSHS    X
+            LDX     keybuffer
+            CMPX    keybuffer + 2
+            BEQ     failaddkey
+            LEAX    1,X
+            CMPX    #keybuffer + 256
+            BNE     storechar
+            LDX     #keybuffer + 4
+storechar   STA     ,X
+            STX     keybuffer
+failaddkey  PULS    X,PC
+
+* remove key from buffer
+* A = character pulled
+* A == 0 on no value found
+pullkey     PSHS    X
+            LDA     #$00
+            LDX     keybuffer + 2
+            CMPX    keybuffer
+            BEQ     endpullkey
+            LDA     ,X+
+            CMPX    #keybuffer + 256
+            BNE     savetail
+            LDX     #keybuffer + 4
+savetail    STX     keybuffer + 2
+endpullkey  PULS    X,PC
 
 * Control memory paging mode
 * Depending on register A
@@ -107,6 +220,20 @@ shadow      PSHS    A,B,X,Y     ;shadow rom into high mem
 * re-enable interrupts
             JSR     unmaskint
             PULS    A,B,X,Y,PC
+
+* set data direction on pia register
+* retains condition of pia control
+* A = data direction bits
+* X = pia register base
+setpiadir   PSHS    B
+            LDB     piacontrola, X
+            PSHS    B
+            ANDB    piasetdir
+            STB     piacontrola, X
+            STA     piadataa, X
+            PULS    B
+            STB     piacontrola, X
+            PULS    B,PC
 
 * swap memory page
 * A = page number

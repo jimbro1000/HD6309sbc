@@ -25,21 +25,22 @@ keybuffer   EQU     $02dd       ;255 character keyboard buffer
                                 ;0-1 = buffer head
                                 ;2-3 = buffer tail
                                 ;4-255 = data
+*keyboard matrix conversion without shift and with shift
+keymatrix   FCB     $40, $61, $62, $63, $64, $65, $66, $67
+            FCB     $68, $69, $6A, $6B, $6C, $6D, $6E, $6F
+            FCB     $70, $71, $72, $73, $74, $75, $76, $77
+            FCB     $78, $79, $7A, $0A, $5E, $08, $09, $20
+            FCB     $30, $31, $32, $33, $34, $35, $36, $37
+            FCB     $38, $39, $3A, $3B, $2C, $2D, $2E, $2F
+            FCB     $0D, $0C, $03, $00, $00, $00, $00, $00
 
-* keyboard matrix without shift
-* row 0 = @ a b c d e f g
-* row 1 = h i j k l m n o
-* row 2 = p q r s t u v w
-* row 3 = x y z (10) ^ (8) (9) space
-* row 4 = 0 1 2 3 4 5 6 7
-* row 5 = 8 9 : ; , - . /
-* row 6 = enter clear break nc nc nc nc shift
-
-* matrix with shift
-* row 0 = (19) A B C D E F G
-* row 1 = H I J K L M N O
-* row 2 = P Q R S T U V W
-* row 3 = X Y Z [ _ (21) ]
+keymatrix2  FCB     $13, $41, $42, $43, $44, $45, $46, $47
+            FCB     $48, $49, $4A, $4B, $4C, $4D, $4E, $4F
+            FCB     $50, $51, $52, $53, $54, $55, $56, $57
+            FCB     $58, $59, $5A, $7B, $5B, $15, $5D, $20
+            FCB     $30, $21, $22, $23, $24, $25, $26, $27
+            FCB     $28, $29, $2A, $2B, $3C, $3D, $3E, $3F
+            FCB     $0D, $5C, $03, $00, $00, $00, $00, $00
 
 * Verify operation of cpu
 rst_entry   LDS     #$7FFF      ;initialise system stack
@@ -106,7 +107,7 @@ scanloop    STB     pia0base + piadataa
             LDA     pia0base + piadatab
             STA     ,X+
             LSLB
-            CMPA    #$80
+            CMPB    #$80
             BNE     scanloop
             PULS    A,B,X,PC
 
@@ -130,9 +131,44 @@ keyloop     LDA     ,X
             BNE     keyloop
             PULS    A,B,X,PC
 
+* convert bit position to integer (0-7)
+* result in A
+bitshift    PSHS    B
+            LDA     #$00
+shiftloop   CMPB    #$01
+            BEQ     bitshiftout
+            LSRB
+            INCA
+            BRA     shiftloop
+bitshiftout PULS    B,PC
+
 * translate keypress to character
 * A = keys pressed on row
 * B = column
+kbdconv     PSHS    B,X
+            PSHU    B
+            LDX     #keymatrix
+            TST     keybdshift
+            BEQ     kbdconvinit
+            LDX     #keymatrix2
+            PSHU    A
+            JSR     bitshift
+            LEAX    A,X
+            PULU    A
+kbdconvinit LDB     #$01
+kbdconvloop PSHU    A
+            TFR     B,A
+            ANDA    1,U
+            BNE     nokey
+            LDA     ,X
+            JSR     addkey
+nokey       LSLB
+            CMPB    #$80
+            BEQ     endkeyconv
+            LEAX    8,X
+            BRA     kbdconvloop
+endkeyconv  LEAU    2,U
+            PULS    B,X,PC
 
 * keyboard buffer handler
 * A = character to store

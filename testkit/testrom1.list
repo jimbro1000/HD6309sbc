@@ -25,144 +25,180 @@ FF0C                  aciabase    EQU     $FF0C       ;ACIA registers
                                                       ;0-1 = buffer head
                                                       ;2-3 = buffer tail
                                                       ;4-255 = data
+                      *keyboard matrix conversion without shift and with shift
+C000  4061626364656667 keymatrix   FCB     $40, $61, $62, $63, $64, $65, $66, $67
+C008  68696A6B6C6D6E6F             FCB     $68, $69, $6A, $6B, $6C, $6D, $6E, $6F
+C010  7071727374757677             FCB     $70, $71, $72, $73, $74, $75, $76, $77
+C018  78797A0A5E080920             FCB     $78, $79, $7A, $0A, $5E, $08, $09, $20
+C020  3031323334353637             FCB     $30, $31, $32, $33, $34, $35, $36, $37
+C028  38393A3B2C2D2E2F             FCB     $38, $39, $3A, $3B, $2C, $2D, $2E, $2F
+C030  0D0C030000000000             FCB     $0D, $0C, $03, $00, $00, $00, $00, $00
                       
-                      * keyboard matrix without shift
-                      * row 0 = @ a b c d e f g
-                      * row 1 = h i j k l m n o
-                      * row 2 = p q r s t u v w
-                      * row 3 = x y z (10) ^ (8) (9) space
-                      * row 4 = 0 1 2 3 4 5 6 7
-                      * row 5 = 8 9 : ; , - . /
-                      * row 6 = enter clear break nc nc nc nc shift
-                      
-                      * matrix with shift
-                      * row 0 = (19) A B C D E F G
-                      * row 1 = H I J K L M N O
-                      * row 2 = P Q R S T U V W
-                      * row 3 = X Y Z [ _ (21) ]
+C038  1341424344454647 keymatrix2  FCB     $13, $41, $42, $43, $44, $45, $46, $47
+C040  48494A4B4C4D4E4F             FCB     $48, $49, $4A, $4B, $4C, $4D, $4E, $4F
+C048  5051525354555657             FCB     $50, $51, $52, $53, $54, $55, $56, $57
+C050  58595A7B5B155D20             FCB     $58, $59, $5A, $7B, $5B, $15, $5D, $20
+C058  3021222324252627             FCB     $30, $21, $22, $23, $24, $25, $26, $27
+C060  28292A2B3C3D3E3F             FCB     $28, $29, $2A, $2B, $3C, $3D, $3E, $3F
+C068  0D5C030000000000             FCB     $0D, $5C, $03, $00, $00, $00, $00, $00
                       
                       * Verify operation of cpu
-C000  10CE7FFF        rst_entry   LDS     #$7FFF      ;initialise system stack
-C004  CE77FF                      LDU     #$77FF      ;initialise user stack
-C007  8600                        LDA     #$00
-C009  1F8B                        TFR     A,DP        ;set DP to 0
-C00B  B70076                      STA     controlreg  ;initialise control register copy with 0
-C00E  B7FF24                      STA     memreg1     ;set control register to 0
-C011  B70077                      STA     mempage     ;set memory page copy to 0
-C014  B7FF25                      STA     memreg2     ;set memory page to 0
-C017  B70100                      STA     intpolltab  ;empty interrupt poll table
-C01A  B70101                      STA     intpolltab+1
-C01D  B700E6                      STA     MDREG       ;initialise copy of ME register
-C020  8601                        LDA     #$01
-C022  BDC19D                      JSR     SETPMD
-C025  BDC17B                      JSR     unmaskint   ;enable interrupts
+C070  10CE7FFF        rst_entry   LDS     #$7FFF      ;initialise system stack
+C074  CE77FF                      LDU     #$77FF      ;initialise user stack
+C077  8600                        LDA     #$00
+C079  1F8B                        TFR     A,DP        ;set DP to 0
+C07B  B70076                      STA     controlreg  ;initialise control register copy with 0
+C07E  B7FF24                      STA     memreg1     ;set control register to 0
+C081  B70077                      STA     mempage     ;set memory page copy to 0
+C084  B7FF25                      STA     memreg2     ;set memory page to 0
+C087  B70100                      STA     intpolltab  ;empty interrupt poll table
+C08A  B70101                      STA     intpolltab+1
+C08D  B700E6                      STA     MDREG       ;initialise copy of ME register
+C090  8601                        LDA     #$01
+C092  BDC24F                      JSR     SETPMD
+C095  BDC22D                      JSR     unmaskint   ;enable interrupts
                                   
-C028  C602            test        LDB     #$02
-C02A  8655            teststart   LDA     #$55
-C02C  8E6000                      LDX     #$6000
+C098  C602            test        LDB     #$02
+C09A  8655            teststart   LDA     #$55
+C09C  8E6000                      LDX     #$6000
                       
-C02F  A784            loop1       STA     $0000, X    ;fill $0000 to $5FFF
-C031  301F                        LEAX    -1, X
-C033  26FA                        BNE     loop1
-C035  86AA                        LDA     #$AA
-C037  8E6000                      LDX     #$6000
+C09F  A784            loop1       STA     $0000, X    ;fill $0000 to $5FFF
+C0A1  301F                        LEAX    -1, X
+C0A3  26FA                        BNE     loop1
+C0A5  86AA                        LDA     #$AA
+C0A7  8E6000                      LDX     #$6000
                       
-C03A  A784            loop2       STA     $0000, X    ;fill $0000 to $5FFF
-C03C  301F                        LEAX    -1, X
-C03E  26FA                        BNE     loop2
-C040  F70076                      STB     controlreg
-C043  C802                        EORB    #$02
-C045  20E3                        BRA     teststart   ;repeat
+C0AA  A784            loop2       STA     $0000, X    ;fill $0000 to $5FFF
+C0AC  301F                        LEAX    -1, X
+C0AE  26FA                        BNE     loop2
+C0B0  F70076                      STB     controlreg
+C0B3  C802                        EORB    #$02
+C0B5  20E3                        BRA     teststart   ;repeat
                       
                       * set paged memory page
                       * A = page number
-C047  B7FF25          setpage     STA     memreg2     ;set memory page
-C04A  B70077                      STA     mempage
-C04D  39                          RTS
+C0B7  B7FF25          setpage     STA     memreg2     ;set memory page
+C0BA  B70077                      STA     mempage
+C0BD  39                          RTS
                       
                       * init keyboard
                       * sets pia0 for keyboard scanning
                       * clears rollover table
-C04E  3412            initkbd     PSHS    A,X
-C050  867F                        LDA     #$7f
-C052  BEFF00                      LDX     pia0base
-C055  BDC14F                      JSR     setpiadir
-C058  8600                        LDA     #$00
-C05A  BEFF02                      LDX     pia0base + 2
-C05D  BDC14F                      JSR     setpiadir
-C060  BE0150                      LDX     keybdbase
-C063  A780            clrkbd      STA     ,X+
-C065  BC0157                      CMPX    keybdbase + 7
-C068  26F9                        BNE     clrkbd
-C06A  3592                        PULS    A,X,PC
+C0BE  3412            initkbd     PSHS    A,X
+C0C0  867F                        LDA     #$7f
+C0C2  BEFF00                      LDX     pia0base
+C0C5  BDC201                      JSR     setpiadir
+C0C8  8600                        LDA     #$00
+C0CA  BEFF02                      LDX     pia0base + 2
+C0CD  BDC201                      JSR     setpiadir
+C0D0  BE0150                      LDX     keybdbase
+C0D3  A780            clrkbd      STA     ,X+
+C0D5  BC0157                      CMPX    keybdbase + 7
+C0D8  26F9                        BNE     clrkbd
+C0DA  3592                        PULS    A,X,PC
                       
                       * scan keyboard
                       * store scan at rollover scan table
                       * assumes pia0 PIA0 A0-A6 and PIA B0-B7 are correctly configured
-C06C  3416            scankbd     PSHS    A,B,X
-C06E  C601                        LDB     #$01
-C070  BE0150                      LDX     keybdbase
-C073  F7FF00          scanloop    STB     pia0base + piadataa
-C076  B6FF02                      LDA     pia0base + piadatab
-C079  A780                        STA     ,X+
-C07B  58                          LSLB
-C07C  8180                        CMPA    #$80
-C07E  26F3                        BNE     scanloop
-C080  3596                        PULS    A,B,X,PC
+C0DC  3416            scankbd     PSHS    A,B,X
+C0DE  C601                        LDB     #$01
+C0E0  BE0150                      LDX     keybdbase
+C0E3  F7FF00          scanloop    STB     pia0base + piadataa
+C0E6  B6FF02                      LDA     pia0base + piadatab
+C0E9  A780                        STA     ,X+
+C0EB  58                          LSLB
+C0EC  C180                        CMPB    #$80
+C0EE  26F3                        BNE     scanloop
+C0F0  3596                        PULS    A,B,X,PC
                       
-C082  BDC06C          updatekbd   JSR     scankbd
-C085  3416                        PSHS    A,B,X
-C087  BE0150                      LDX     keybdbase
-C08A  A607                        LDA     7,X
-C08C  8440                        ANDA    #$40
-C08E  2702                        BEQ     setshift
-C090  86FF                        LDA     #$ff
-C092  B70149          setshift    STA     keybdshift
-C095  C600                        LDB     #$00
-C097  A684            keyloop     LDA     ,X
-C099  A808                        EORA    8,X
+C0F2  BDC0DC          updatekbd   JSR     scankbd
+C0F5  3416                        PSHS    A,B,X
+C0F7  BE0150                      LDX     keybdbase
+C0FA  A607                        LDA     7,X
+C0FC  8440                        ANDA    #$40
+C0FE  2702                        BEQ     setshift
+C100  86FF                        LDA     #$ff
+C102  B70149          setshift    STA     keybdshift
+C105  C600                        LDB     #$00
+C107  A684            keyloop     LDA     ,X
+C109  A808                        EORA    8,X
                       * convert new keys to characters in buffer
-C09B  A684                        LDA     ,X
-C09D  A708                        STA     8,X
-C09F  3001                        LEAX    1,X
-C0A1  5C                          INCB
-C0A2  BC0158                      CMPX    keybdbase + 8
-C0A5  26F0                        BNE     keyloop
-C0A7  3596                        PULS    A,B,X,PC
+C10B  A684                        LDA     ,X
+C10D  A708                        STA     8,X
+C10F  3001                        LEAX    1,X
+C111  5C                          INCB
+C112  BC0158                      CMPX    keybdbase + 8
+C115  26F0                        BNE     keyloop
+C117  3596                        PULS    A,B,X,PC
+                      
+                      * convert bit position to integer (0-7)
+                      * result in A
+C119  3404            bitshift    PSHS    B
+C11B  8600                        LDA     #$00
+C11D  C101            shiftloop   CMPB    #$01
+C11F  2704                        BEQ     bitshiftout
+C121  54                          LSRB
+C122  4C                          INCA
+C123  20F8                        BRA     shiftloop
+C125  3584            bitshiftout PULS    B,PC
                       
                       * translate keypress to character
                       * A = keys pressed on row
                       * B = column
+C127  3414            kbdconv     PSHS    B,X
+C129  3604                        PSHU    B
+C12B  8EC000                      LDX     #keymatrix
+C12E  7D0149                      TST     keybdshift
+C131  270C                        BEQ     kbdconvinit
+C133  8EC038                      LDX     #keymatrix2
+C136  3602                        PSHU    A
+C138  BDC119                      JSR     bitshift
+C13B  3086                        LEAX    A,X
+C13D  3702                        PULU    A
+C13F  C601            kbdconvinit LDB     #$01
+C141  3602            kbdconvloop PSHU    A
+C143  1F98                        TFR     B,A
+C145  A441                        ANDA    1,U
+C147  2605                        BNE     nokey
+C149  A684                        LDA     ,X
+C14B  BDC15B                      JSR     addkey
+C14E  58              nokey       LSLB
+C14F  C180                        CMPB    #$80
+C151  2704                        BEQ     endkeyconv
+C153  3008                        LEAX    8,X
+C155  20EA                        BRA     kbdconvloop
+C157  3342            endkeyconv  LEAU    2,U
+C159  3594                        PULS    B,X,PC
                       
                       * keyboard buffer handler
                       * A = character to store
                       * rejects input if buffer is full
-C0A9  3410            addkey      PSHS    X
-C0AB  BE02DD                      LDX     keybuffer
-C0AE  BC02DF                      CMPX    keybuffer + 2
-C0B1  270F                        BEQ     failaddkey
-C0B3  3001                        LEAX    1,X
-C0B5  8C03DD                      CMPX    #keybuffer + 256
-C0B8  2603                        BNE     storechar
-C0BA  8E02E1                      LDX     #keybuffer + 4
-C0BD  A784            storechar   STA     ,X
-C0BF  BF02DD                      STX     keybuffer
-C0C2  3590            failaddkey  PULS    X,PC
+C15B  3410            addkey      PSHS    X
+C15D  BE02DD                      LDX     keybuffer
+C160  BC02DF                      CMPX    keybuffer + 2
+C163  270F                        BEQ     failaddkey
+C165  3001                        LEAX    1,X
+C167  8C03DD                      CMPX    #keybuffer + 256
+C16A  2603                        BNE     storechar
+C16C  8E02E1                      LDX     #keybuffer + 4
+C16F  A784            storechar   STA     ,X
+C171  BF02DD                      STX     keybuffer
+C174  3590            failaddkey  PULS    X,PC
                       
                       * remove key from buffer
                       * A = character pulled
                       * A == 0 on no value found
-C0C4  3410            pullkey     PSHS    X
-C0C6  8600                        LDA     #$00
-C0C8  BE02DF                      LDX     keybuffer + 2
-C0CB  BC02DD                      CMPX    keybuffer
-C0CE  270D                        BEQ     endpullkey
-C0D0  A680                        LDA     ,X+
-C0D2  8C03DD                      CMPX    #keybuffer + 256
-C0D5  2603                        BNE     savetail
-C0D7  8E02E1                      LDX     #keybuffer + 4
-C0DA  BF02DF          savetail    STX     keybuffer + 2
-C0DD  3590            endpullkey  PULS    X,PC
+C176  3410            pullkey     PSHS    X
+C178  8600                        LDA     #$00
+C17A  BE02DF                      LDX     keybuffer + 2
+C17D  BC02DD                      CMPX    keybuffer
+C180  270D                        BEQ     endpullkey
+C182  A680                        LDA     ,X+
+C184  8C03DD                      CMPX    #keybuffer + 256
+C187  2603                        BNE     savetail
+C189  8E02E1                      LDX     #keybuffer + 4
+C18C  BF02DF          savetail    STX     keybuffer + 2
+C18F  3590            endpullkey  PULS    X,PC
                       
                       * Control memory paging mode
                       * Depending on register A
@@ -174,66 +210,66 @@ C0DD  3590            endpullkey  PULS    X,PC
                       * location mempage contains a copy of memreg2
                       
                       * Assumes extended memory is available
-C0DF  8100            pagemode    CMPA    #$00        ;enable/disable paging
-C0E1  260C                        BNE     enablepage
-C0E3  86FE            disablepage LDA     #$FE
-C0E5  B40076                      ANDA    controlreg
-C0E8  B70076                      STA     controlreg
-C0EB  B7FF24                      STA     memreg1     ;disable
-C0EE  39                          RTS
-C0EF  3402            enablepage  PSHS    A           ;enable
-C0F1  8601                        LDA     #$01
-C0F3  BA0076                      ORA     controlreg
-C0F6  B70076                      STA     controlreg
-C0F9  B7FF24                      STA     memreg1
-C0FC  3582                        PULS    A,PC
+C191  8100            pagemode    CMPA    #$00        ;enable/disable paging
+C193  260C                        BNE     enablepage
+C195  86FE            disablepage LDA     #$FE
+C197  B40076                      ANDA    controlreg
+C19A  B70076                      STA     controlreg
+C19D  B7FF24                      STA     memreg1     ;disable
+C1A0  39                          RTS
+C1A1  3402            enablepage  PSHS    A           ;enable
+C1A3  8601                        LDA     #$01
+C1A5  BA0076                      ORA     controlreg
+C1A8  B70076                      STA     controlreg
+C1AB  B7FF24                      STA     memreg1
+C1AE  3582                        PULS    A,PC
                       
-C0FE  3436            shadow      PSHS    A,B,X,Y     ;shadow rom into high mem
+C1B0  3436            shadow      PSHS    A,B,X,Y     ;shadow rom into high mem
                       * disable interrupts
-C100  BDC178                      JSR     maskint
+C1B2  BDC22A                      JSR     maskint
                       * copy interrupt vectors first as precaution
-C103  8EFFF0                      LDX     #$FFF0
-C106  108E4000                    LDY     #$4000
-C10A  10860010                    LDW     #$0010
-C10E  BDC173                      JSR     blockcopy
-C111  8601                        LDA     #$01
-C113  BDC0DF                      JSR     pagemode
-C116  8E4000                      LDX     #$4000
-C119  108EFFF0                    LDY     #$FFF0
-C11D  10860010                    LDW     #$0010
-C121  BDC173                      JSR     blockcopy
-C124  8600                        LDA     #$00
-C126  BDC0DF                      JSR     pagemode
+C1B5  8EFFF0                      LDX     #$FFF0
+C1B8  108E4000                    LDY     #$4000
+C1BC  10860010                    LDW     #$0010
+C1C0  BDC225                      JSR     blockcopy
+C1C3  8601                        LDA     #$01
+C1C5  BDC191                      JSR     pagemode
+C1C8  8E4000                      LDX     #$4000
+C1CB  108EFFF0                    LDY     #$FFF0
+C1CF  10860010                    LDW     #$0010
+C1D3  BDC225                      JSR     blockcopy
+C1D6  8600                        LDA     #$00
+C1D8  BDC191                      JSR     pagemode
                       * copy rom from C000 to 4000
-C129  8EC000                      LDX     #$C000
-C12C  108E4000                    LDY     #$4000
-C130  10863F00                    LDW     #$3F00
-C134  BDC173                      JSR     blockcopy
+C1DB  8EC000                      LDX     #$C000
+C1DE  108E4000                    LDY     #$4000
+C1E2  10863F00                    LDW     #$3F00
+C1E6  BDC225                      JSR     blockcopy
                       * enable page mode
-C137  8601                        LDA     #$01
-C139  BDC0DF                      JSR     pagemode
+C1E9  8601                        LDA     #$01
+C1EB  BDC191                      JSR     pagemode
                       * copy rom from 4000 back to C000
-C13C  8E4000                      LDX     #$4000
-C13F  108EC000                    LDY     #$C000
-C143  10863F00                    LDW     #$3F00
-C147  BDC173                      JSR     blockcopy
+C1EE  8E4000                      LDX     #$4000
+C1F1  108EC000                    LDY     #$C000
+C1F5  10863F00                    LDW     #$3F00
+C1F9  BDC225                      JSR     blockcopy
                       * re-enable interrupts
-C14A  BDC17B                      JSR     unmaskint
-C14D  35B6                        PULS    A,B,X,Y,PC
+C1FC  BDC22D                      JSR     unmaskint
+C1FF  35B6                        PULS    A,B,X,Y,PC
                       
                       * set data direction on pia register
                       * retains condition of pia control
                       * A = data direction bits
                       * X = pia register base
-C14F  3404            setpiadir   PSHS    B
-C151  E601                        LDB     piacontrola, X
-C153  3404                        PSHS    B
-C155  F400FB                      ANDB    piasetdir
-C158  E701                        STB     piacontrola, X
-C15A  A784                        STA     piadataa, X
-C15C  3504                        PULS    B
-C15E  E701                        STB     piacontrola, X
-C160  3584                        PULS    B,PC
+C201  3404            setpiadir   PSHS    B
+C203  E601                        LDB     piacontrola, X
+C205  3404                        PSHS    B
+C207  F400FB                      ANDB    piasetdir
+C20A  E701                        STB     piacontrola, X
+C20C  A784                        STA     piadataa, X
+C20E  3504                        PULS    B
+C210  E701                        STB     piacontrola, X
+C212  3584                        PULS    B,PC
                       
                       * swap memory page
                       * A = page number
@@ -241,28 +277,28 @@ C160  3584                        PULS    B,PC
                       * nb: this code must not be held
                       *     in paged memory to avoid
                       *     unexpected behaviour on return
-C162  3404            pageswap    PSHS    B
-C164  F60076                      LDB     controlreg
-C167  C401                        ANDB    #$01
-C169  2706                        BEQ     swapret
-C16B  B70077                      STA     mempage
-C16E  B7FF25                      STA     memreg2
-C171  3584            swapret     PULS    B,PC
+C214  3404            pageswap    PSHS    B
+C216  F60076                      LDB     controlreg
+C219  C401                        ANDB    #$01
+C21B  2706                        BEQ     swapret
+C21D  B70077                      STA     mempage
+C220  B7FF25                      STA     memreg2
+C223  3584            swapret     PULS    B,PC
                       
                       * copy rom block from X to Y
                       * X = start address
                       * Y = destination address
                       * W = length
-C173  113812          blockcopy   TFM     X+,Y+           ; 6309 specific implementation - will fail on a 6809
-C176  3580                        PULS    PC
+C225  113812          blockcopy   TFM     X+,Y+           ; 6309 specific implementation - will fail on a 6809
+C228  3580                        PULS    PC
                       
                       * disable interrupts (ignores existing state)
-C178  1A50            maskint     ORCC    #%01010000
-C17A  39                          RTS
+C22A  1A50            maskint     ORCC    #%01010000
+C22C  39                          RTS
                       
                       * enable interrupts (ignores prior state)
-C17B  1CAF            unmaskint   ANDCC   #%10101111
-C17D  39                          RTS
+C22D  1CAF            unmaskint   ANDCC   #%10101111
+C22F  39                          RTS
                       
                       * poll external interrupts
                       * check interrupt poll table
@@ -274,21 +310,21 @@ C17D  39                          RTS
                       * halts on first zero word entry at 0/1
                       * while flexible and extendable it is also slow
                       * rapid interrupts will becoming blocking
-C17E  10BE0100        pollint     LDY     intpolltab  ;point Y at start of table
-C182  AEA1            pollloop    LDX     ,Y++        ;load first register address
-C184  2601                        BNE     scanpoll    ;proceed if non-zero value found
-C186  3B                          RTI                 ;release from poll without action
-C187  A6A0            scanpoll    LDA     ,Y+         ;grab test mask
-C189  E6A0                        LDB     ,Y+         ;grab test type
-C18B  2608                        BNE     pollpos     ;select positive of negative test
-C18D  A484            pollneg     ANDA    ,X          ;mask address at X
-C18F  270A                        BEQ     vectorpoll  ;if 0 result use vector
-C191  3122            pollnext    LEAY    2,Y         ;on negative result skip vector
-C193  20ED                        BRA     pollloop    ;next entry
-C195  A484            pollpos     ANDA    ,X          ;mask address at X
-C197  2602                        BNE     vectorpoll  ;if non0 result use vector
-C199  20F6                        BRA     pollnext    ;next entry
-C19B  6EA4            vectorpoll  JMP     ,Y          ;vector to identified handler
+C230  10BE0100        pollint     LDY     intpolltab  ;point Y at start of table
+C234  AEA1            pollloop    LDX     ,Y++        ;load first register address
+C236  2601                        BNE     scanpoll    ;proceed if non-zero value found
+C238  3B                          RTI                 ;release from poll without action
+C239  A6A0            scanpoll    LDA     ,Y+         ;grab test mask
+C23B  E6A0                        LDB     ,Y+         ;grab test type
+C23D  2608                        BNE     pollpos     ;select positive of negative test
+C23F  A484            pollneg     ANDA    ,X          ;mask address at X
+C241  270A                        BEQ     vectorpoll  ;if 0 result use vector
+C243  3122            pollnext    LEAY    2,Y         ;on negative result skip vector
+C245  20ED                        BRA     pollloop    ;next entry
+C247  A484            pollpos     ANDA    ,X          ;mask address at X
+C249  2602                        BNE     vectorpoll  ;if non0 result use vector
+C24B  20F6                        BRA     pollnext    ;next entry
+C24D  6EA4            vectorpoll  JMP     ,Y          ;vector to identified handler
                       
                       * Change processor to Emulation Mode or Native Mode,
                       * depending on value in Register A
@@ -303,38 +339,38 @@ C19B  6EA4            vectorpoll  JMP     ,Y          ;vector to identified hand
                       * push the appropriate LDMD / RTS sequence onto the
                       * stack and call it as a subroutine.
                       * Works for 6309 only.
-C19D  3417            SETPMD      PSHS    X,D,CC      ;Save registers
-C19F  1A50                        ORCC    #$50        ;Make operation indivisible
-C1A1  F600E6                      LDB     MDREG       ;Get mode register image
-C1A4  C4FE                        ANDB    #$FE        ; strip mode selection bit (Emulation)
-C1A6  4D                          TSTA
-C1A7  2702                        BEQ     SETMD2      ;Skip next part if want Emulation
-C1A9  CA01                        ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
-C1AB  F700E6          SETMD2      STB     MDREG       ;B has right value - update register image
-C1AE  8639                        LDA     #$39        ;RTS op-code
-C1B0  1E98                        EXG     B,A         ;Now A = LDMD's immed. operand, B = RTS
-C1B2  8E103D                      LDX     #$103D      ;X has LDMD's 2-byte op-code
-C1B5  1E01                        EXG     D,X         ;Now D:X = 10 3D <value> 39
-C1B7  3416                        PSHS    X,D         ;Put subroutine on stack
-C1B9  ADE4                        JSR     ,S          ;Call subroutine, setting mode
-C1BB  3264                        LEAS    4,S         ; throw away subroutine when done.
-C1BD  3597                        PULS    CC,D,X,PC   ; and return to caller.
+C24F  3417            SETPMD      PSHS    X,D,CC      ;Save registers
+C251  1A50                        ORCC    #$50        ;Make operation indivisible
+C253  F600E6                      LDB     MDREG       ;Get mode register image
+C256  C4FE                        ANDB    #$FE        ; strip mode selection bit (Emulation)
+C258  4D                          TSTA
+C259  2702                        BEQ     SETMD2      ;Skip next part if want Emulation
+C25B  CA01                        ORB     #$01        ;Set Native mode bit (INCB lacks clarity)
+C25D  F700E6          SETMD2      STB     MDREG       ;B has right value - update register image
+C260  8639                        LDA     #$39        ;RTS op-code
+C262  1E98                        EXG     B,A         ;Now A = LDMD's immed. operand, B = RTS
+C264  8E103D                      LDX     #$103D      ;X has LDMD's 2-byte op-code
+C267  1E01                        EXG     D,X         ;Now D:X = 10 3D <value> 39
+C269  3416                        PSHS    X,D         ;Put subroutine on stack
+C26B  ADE4                        JSR     ,S          ;Call subroutine, setting mode
+C26D  3264                        LEAS    4,S         ; throw away subroutine when done.
+C26F  3597                        PULS    CC,D,X,PC   ; and return to caller.
                       
-C1BF  3B              nmi_entry   RTI
-C1C0  3B              swi_entry   RTI
-C1C1  7EC17E          irq_entry   JMP     pollint
-C1C4  3B              firq_entry  RTI
-C1C5  3B              swi2_entry  RTI
-C1C6  3B              swi3_entry  RTI
-C1C7  3B              div0_entry  RTI
+C271  3B              nmi_entry   RTI
+C272  3B              swi_entry   RTI
+C273  7EC230          irq_entry   JMP     pollint
+C276  3B              firq_entry  RTI
+C277  3B              swi2_entry  RTI
+C278  3B              swi3_entry  RTI
+C279  3B              div0_entry  RTI
                       
                       * Boot and interrupt vectors
 FFF0                              ORG     $FFF0
-FFF0  C1C7            div0        FDB     div0_entry  ;specific to 6309 native mode
-FFF2  C1C6            swi3        FDB     swi3_entry
-FFF4  C1C5            swi2        FDB     swi2_entry
-FFF6  C1C4            firq        FDB     firq_entry
-FFF8  C1C1            irq         FDB     irq_entry
-FFFA  C1C0            swi         FDB     swi_entry
-FFFC  C1BF            nmi         FDB     nmi_entry
-FFFE  C000            reset       FDB     rst_entry
+FFF0  C279            div0        FDB     div0_entry  ;specific to 6309 native mode
+FFF2  C278            swi3        FDB     swi3_entry
+FFF4  C277            swi2        FDB     swi2_entry
+FFF6  C276            firq        FDB     firq_entry
+FFF8  C273            irq         FDB     irq_entry
+FFFA  C272            swi         FDB     swi_entry
+FFFC  C271            nmi         FDB     nmi_entry
+FFFE  C070            reset       FDB     rst_entry

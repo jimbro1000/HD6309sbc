@@ -1,0 +1,75 @@
+8000                              ORG     $8000
+8000  0000                        fdb     $00         ;create empty block $8000-$BFFF
+                      
+C000                              ORG     $C000
+                      
+FF00                  pia0base    EQU     $FF00       ;PIA registers
+FF04                  pia1base    EQU     $FF04
+FF08                  pia2base    EQU     $FF08
+0000                  piadataa    EQU     0           ;offset to pia data A register
+0001                  piacontrola EQU     1           ;offset to pia control A register
+0002                  piadatab    EQU     2           ;offset to pia data B register
+0003                  piacontrolb EQU     3           ;offset to pia control B register
+0004                  piasetdata  EQU     %00000100   ;or mask to set data register
+00FB                  piasetdir   EQU     %11111011   ;and mask to set direction register
+FF02                  pia0datab   EQU     $FF02
+                      
+C000  4F              test        CLRA                    ; direction register 0=output on all bits
+C001  8EFF02                      LDX     #pia0datab      ; use pia0 register B
+C004  BDC020                      JSR     setpiadir       ; call set direction
+                      * exercise PIA0 register B for output
+                      * cycle through binary values but delay between values
+                      * target CPU cycles is 3MHz
+                      * using leax to count with nops to delay
+                      *  nop = 2 cycles
+                      *  leax = 4 cycles
+                      *  bne = 3 cycles
+                      *  ldx = 3 cycles
+C007  8655            teststart   LDA     #$55
+C009  C60A            loop        LDB     #$0A
+C00B  8E2710          iloop       LDX     #$2710      ; 10000
+                      * 200 loops per millisecond -> 10000 loops = 0.05 seconds
+C00E  12              iloop1      NOP                 ; 2 cycles
+C00F  12                          NOP                 ; 2 cycles
+C010  12                          NOP                 ; 2 cycles
+C011  12                          NOP                 ; 2 cycles
+C012  301F                        LEAX    -1,X        ; 4 cycles
+C014  26F8                        BNE     iloop1      ; 3 cycles = 15 cycles per loop == 5 uSec
+C016  5A                          DECB
+C017  26F2                        BNE     iloop
+C019  B7FF02                      STA     pia0datab   ;write a to PIA register B data
+C01C  88FF                        EORA    #$FF
+C01E  20E9                        BRA     loop
+                      
+                      * set data direction on pia register
+                      * retains condition of pia control
+                      * A = data direction bits
+                      * X = pia register base
+C020  3404            setpiadir   PSHS    B
+C022  E601                        LDB     piacontrola, X
+C024  3404                        PSHS    B
+C026  F400FB                      ANDB    piasetdir
+C029  E701                        STB     piacontrola, X
+C02B  A784                        STA     piadataa, X
+C02D  3504                        PULS    B
+C02F  E701                        STB     piacontrola, X
+C031  3584                        PULS    B,PC
+                      
+C033  3B              nmi_entry   RTI
+C034  3B              swi_entry   RTI
+C035  3B              irq_entry   RTI
+C036  3B              firq_entry  RTI
+C037  3B              swi2_entry  RTI
+C038  3B              swi3_entry  RTI
+C039  3B              div0_entry  RTI
+                      
+                      * Boot and interrupt vectors
+FFF0                              ORG     $FFF0
+FFF0  C039            div0        FDB     div0_entry  ;specific to 6309 native mode
+FFF2  C038            swi3        FDB     swi3_entry
+FFF4  C037            swi2        FDB     swi2_entry
+FFF6  C036            firq        FDB     firq_entry
+FFF8  C035            irq         FDB     irq_entry
+FFFA  C034            swi         FDB     swi_entry
+FFFC  C033            nmi         FDB     nmi_entry
+FFFE  C000            reset       FDB     test

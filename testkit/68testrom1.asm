@@ -1,3 +1,7 @@
+            ORG     $8000
+
+            FCB     $00
+
             ORG     $C000
 
 controlreg  EQU     $0076       ;zero page copy of control register 1

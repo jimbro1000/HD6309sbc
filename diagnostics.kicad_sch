@@ -1614,10 +1614,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929d")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa52")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -2230,10 +2230,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929e")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa53")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -2504,10 +2504,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929f")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa54")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -2640,10 +2640,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f92a0")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa55")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -2979,10 +2979,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f92a1")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa56")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -3113,10 +3113,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f92a2")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa57")
 		)
 		(instances
 			(project "HD6309sbc"
@@ -3249,10 +3249,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f929c")
+			(uuid "86dcba81-a95e-4cdd-b5b8-92020f6f92a3")
 		)
 		(pin "2"
-			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa51")
+			(uuid "0829528c-d164-43ab-ad53-ca9a1e0faa58")
 		)
 		(instances
 			(project "HD6309sbc"

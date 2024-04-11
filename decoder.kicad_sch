@@ -1800,16 +1800,6 @@
 		)
 		(uuid "956a7882-1904-4f11-b60e-1a6f1dd96b40")
 	)
-	(wire
-		(pts
-			(xy 64.77 86.36) (xy 77.47 86.36)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9a630d98-d77f-4e9e-8008-7a48ec68dabd")
-	)
 	(bus
 		(pts
 			(xy 44.45 83.82) (xy 44.45 86.36)
@@ -1829,16 +1819,6 @@
 			(type default)
 		)
 		(uuid "a2881da0-b4b0-41ab-b55a-5a56fbb44e19")
-	)
-	(wire
-		(pts
-			(xy 59.69 58.42) (xy 72.39 58.42)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a3f24e36-8d7c-456c-9d63-7a0f1dc06bf4")
 	)
 	(bus
 		(pts
@@ -1961,17 +1941,6 @@
 		)
 		(uuid "20a49364-bd7e-422b-8cfd-aa20dbee75ff")
 	)
-	(label "MappedMem"
-		(at 66.04 86.36 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "3c3e74c8-1498-4c37-b253-2506531fc3de")
-	)
 	(label "A15"
 		(at 46.99 96.52 0)
 		(fields_autoplaced yes)
@@ -2071,17 +2040,6 @@
 		)
 		(uuid "af492a9e-f387-4337-8e60-275f2e1a57cb")
 	)
-	(label "MappedMem"
-		(at 60.96 58.42 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d49d2476-ed09-4c34-bae8-f8e0f856f177")
-	)
 	(label "A10"
 		(at 46.99 83.82 0)
 		(fields_autoplaced yes)
@@ -2093,7 +2051,7 @@
 		)
 		(uuid "f7a6aa71-0dec-493d-ab5d-7ddf803a35e2")
 	)
-	(global_label "SELPC"
+	(global_label "~{SELPC}"
 		(shape output)
 		(at 92.71 48.26 0)
 		(fields_autoplaced yes)
@@ -2115,7 +2073,29 @@
 			)
 		)
 	)
-	(global_label "SELPA"
+	(global_label "~{MappedMem}"
+		(shape input)
+		(at 72.39 58.42 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "0c3b32fe-e439-4263-b36a-ab1948543d37")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 58.0355 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "~{SELPA}"
 		(shape output)
 		(at 92.71 43.18 0)
 		(fields_autoplaced yes)
@@ -2137,7 +2117,7 @@
 			)
 		)
 	)
-	(global_label "SELPE"
+	(global_label "~{SELPE}"
 		(shape output)
 		(at 92.71 53.34 0)
 		(fields_autoplaced yes)
@@ -2159,7 +2139,29 @@
 			)
 		)
 	)
-	(global_label "SELPF"
+	(global_label "~{MappedMem}"
+		(shape output)
+		(at 64.77 86.36 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "85de0f63-9bba-4617-83ad-d79daaa65233")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 79.1245 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "~{SELPF}"
 		(shape output)
 		(at 92.71 55.88 0)
 		(fields_autoplaced yes)
@@ -2181,7 +2183,7 @@
 			)
 		)
 	)
-	(global_label "SELPB"
+	(global_label "~{SELPB}"
 		(shape output)
 		(at 92.71 45.72 0)
 		(fields_autoplaced yes)
@@ -2203,7 +2205,7 @@
 			)
 		)
 	)
-	(global_label "SELPG"
+	(global_label "~{SELPG}"
 		(shape output)
 		(at 92.71 58.42 0)
 		(fields_autoplaced yes)
@@ -2225,7 +2227,7 @@
 			)
 		)
 	)
-	(global_label "SELPH"
+	(global_label "~{SELPH}"
 		(shape output)
 		(at 92.71 60.96 0)
 		(fields_autoplaced yes)
@@ -2247,7 +2249,7 @@
 			)
 		)
 	)
-	(global_label "SELPD"
+	(global_label "~{SELPD}"
 		(shape output)
 		(at 92.71 50.8 0)
 		(fields_autoplaced yes)

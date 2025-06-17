@@ -657,26 +657,6 @@
     [
       "b6976bcd-dc73-4942-aa19-f7adbf9104c7",
       "Root"
-    ],
-    [
-      "7fb0b11a-d520-4ab4-8aaa-1ba47fc9417e",
-      "ClockCard"
-    ],
-    [
-      "1d331393-9975-42e0-8670-b9522eacc557",
-      "ExpansionPort"
-    ],
-    [
-      "d89ed66f-3f07-40a4-a82f-2642d873e0a8",
-      "Diagnostics"
-    ],
-    [
-      "6530a726-d8fb-411c-ae0c-4c62a9e8e49d",
-      "GPR1"
-    ],
-    [
-      "5dcc110f-47fb-4be2-aa55-f46f839ce98e",
-      "MemoryDecoder"
     ]
   ],
   "text_variables": {}
